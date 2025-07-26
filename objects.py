@@ -18,30 +18,52 @@ class Ball:
         self.speed = random.uniform(-3, 3)
         self.velocity = self.direction * self.speed
 
-    def move(self):
+    def move(self, arc):
         self.velocity.y += GRAVITY
 
         if self.velocity.length() > MAX_SPEED:
             self.velocity = self.velocity.normalize() * MAX_SPEED
         
-        #Collision avec les bords
-        if self.position.x - self.radius < 0:
-            self.position.x = 0 + self.radius
-            self.velocity.x *= -ENERGY_LOST_COEFF
-        if self.position.x + self.radius > SCREEN_WIDTH:
-            self.position.x = SCREEN_WIDTH - self.radius
-            self.velocity.x *= -ENERGY_LOST_COEFF
-        if self.position.y - self.radius < 0:
-            self.position.y = 0 + self.radius
-            self.velocity.y *= -ENERGY_LOST_COEFF
-        if self.position.y + self.radius > SCREEN_HEIGHT:
-            self.position.y = SCREEN_HEIGHT - self.radius
-            self.velocity.y *= -ENERGY_LOST_COEFF
-
+        # Collision avec le cercle
+        vec_arc_balle = pygame.Vector2(self.position.x - arc.rect.centerx,
+                                       self.position.y - arc.rect.centery)
+        dist_arc_balle = math.hypot(*vec_arc_balle)
+        max_dist = arc.radius - self.radius
+        if dist_arc_balle > max_dist:
+            # Normale
+            normale = vec_arc_balle / dist_arc_balle
+            # Produit scalaire (vitesse . normale)
+            ps_v_norm = ((self.velocity.x * normale.x) +
+                         (self.velocity.y * normale.y))
+            # Réflexion de la vitesse (rebond)
+            self.velocity -= 2 * ps_v_norm * normale
+            # Perte d'énergie due au rebond (ou gain)
+            self.velocity *= ENERGY_LOST_COEFF
+            # Replacerla balle correctement
+            self.position = arc.rect.center + normale * max_dist
+        
+        print(abs(self.velocity.x), abs(self.velocity.y))
         self.position += self.velocity
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, self.position, self.radius)
 
 class Arc:
-    pass
+    def __init__(self):
+        self.color = "white"
+
+        self.rect = pygame.Rect(0, 0, SCREEN_WIDTH / 1.5, SCREEN_WIDTH / 1.5)
+        self.rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+        self.radius = self.rect.height / 2
+
+        self.start_angle = 0
+        self.end_angle = 2 * math.pi
+
+        self.width = 5
+
+    def rotate(self):
+        pass
+
+    def draw(self, surface):
+        pygame.draw.arc(surface, self.color, self.rect,
+                        self.start_angle, self.end_angle, self.width)

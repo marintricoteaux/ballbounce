@@ -11,6 +11,8 @@ if __name__ == "__main__":
     running = True
 
     balls = []
+    arcs = []
+    arcs.append(Arc())
 
     while running:
         for event in pygame.event.get():
@@ -21,14 +23,17 @@ if __name__ == "__main__":
                     running = False
                 if event.key == pygame.K_SPACE:
                     balls.append(Ball())
-        
-        for ball in balls:
-            ball.move()
 
+        for ball in balls:
+            for arc in arcs:
+                ball.move(arc)
+        
         screen.fill("black")
 
         for ball in balls:
             ball.draw(screen)
+        for arc in arcs:
+            arc.draw(screen)
 
         pygame.display.flip()
 
