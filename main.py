@@ -24,6 +24,8 @@ if __name__ == "__main__":
                 if event.key == pygame.K_SPACE:
                     balls.append(Ball())
 
+        for arc in arcs:
+            arc.rotate()
         for ball in balls:
             for arc in arcs:
                 ball.move(arc)
