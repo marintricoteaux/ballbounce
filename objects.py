@@ -19,6 +19,8 @@ class Ball:
         self.velocity = self.direction * self.speed
 
         self.is_out_circle = False
+        self.is_out_screen = False
+        self.has_spawned = False
 
     def move(self, arc):
         self.velocity.y += GRAVITY
@@ -36,7 +38,8 @@ class Ball:
             angle = math.atan2(-vec_arc_balle.y, vec_arc_balle.x)
             if angle < 0:
                 angle += 2 * math.pi
-            if angle_in_interval(angle, arc.start_hole_angle, arc.end_hole_angle):
+            if angle_in_interval(angle, arc.start_hole_angle,
+                                 arc.end_hole_angle):
                 self.is_out_circle = True
             else:
                 # Rebond                
@@ -47,7 +50,31 @@ class Ball:
                 self.velocity *= ENERGY_LOST_COEFF
                 self.position = arc.rect.center + normale * max_dist
         
+        # La balle sort de l'écran
+        if not (0 < self.position.x < SCREEN_WIDTH or
+                0 < self.position.y < SCREEN_HEIGHT):
+            self.is_out_screen = True
+
         self.position += self.velocity
+    
+    def collision_ball(self, other):
+        delta = other.position - self.position
+        distance = delta.length()
+        min_dist = self.radius + other.radius
+        if distance < min_dist and distance != 0:
+            # Correction de position
+            overlap = min_dist - distance
+            direction = delta.normalize()
+            self.position -= direction * (overlap / 2)
+            other.position += direction * (overlap / 2)
+            # Rebond : échange de vitesse sur l'axe de collision
+            v1 = self.velocity
+            v2 = other.velocity
+            n = direction
+            p = 2 * (v1 - v2).dot(n) / 2
+
+            self.velocity -= p * n
+            other.velocity += p * n
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, self.position, self.radius)
@@ -66,7 +93,20 @@ class Arc:
         if self.end_hole_angle > 2 * math.pi:
             self.end_hole_angle -= 2 * math.pi
 
-        self.width = 5
+        self.width = 1
+
+        # Effet néon extérieur
+        self.neon_width = 1
+        self.neon_color = []
+        self.neon_rect = []
+        for i in range (10):
+            self.neon_color.append(pygame.Color(100 - (i * 5),
+                                                100 - (i * 5),
+                                                100 - (i * 5)))
+            self.neon_rect.append(pygame.Rect(self.rect))
+            self.neon_rect[i].width = self.rect.width + i
+            self.neon_rect[i].height = self.rect.height + i
+            self.neon_rect[i].center = self.rect.center 
 
     def rotate(self):
         self.start_hole_angle = ((self.start_hole_angle + ARC_SPEED_ROTATE) %
@@ -75,5 +115,9 @@ class Arc:
                                (2 * math.pi))
 
     def draw(self, surface):
-        pygame.draw.arc(surface, self.color, self.rect,
-                        self.end_hole_angle, self.start_hole_angle, self.width)
+        # Arc principal
+        pygame.draw.arc(surface, self.color, self.rect, self.end_hole_angle,
+                        self.start_hole_angle, self.width)
+        # Effet néon
+        #for i in range(10):
+            #pygame.draw.arc(surface, self.neon_color[i], self.neon_rect[i], self.end_hole_angle, self.start_hole_angle, self.neon_width)
