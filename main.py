@@ -19,10 +19,11 @@ if __name__ == "__main__":
     os.makedirs("videos", exist_ok = True)
     frame_count = 0
 
-    balls = []
-    balls.append(Ball())
+    ball_1 = Ball()
     arcs = []
-    arcs.append(Arc())
+    for i in range(0, 10):
+        arcs.append(Arc(i * (30), i * (0.1), 0.95 - ((i+1) * 0.05)))
+    index_arcs = 0
 
     while running and frame_count < MAX_FRAMES:
         for event in pygame.event.get():
@@ -34,29 +35,17 @@ if __name__ == "__main__":
 
         for arc in arcs:
             arc.rotate()
-        for ball in balls:
-            for arc in arcs:
-                # On fait bouger la balle par rapport à l'arc
-                ball.move(arc)
-                # Lorsqu'une balle sort du cercle :
-                if ball.is_out_circle and not ball.has_spawned:
-                    for i in range (2):
-                        balls.append(Ball())
-                        out_sound.play()
-                    ball.has_spawned = True
-                # Lorque la balle sort de l'écran, elle est supprimée
-                if ball.is_out_screen:
-                    balls.remove(ball)
-        for i in range(len(balls)):
-            for j in range (i + 1, len(balls)):
-                balls[i].collision_ball(balls[j])
+
+        ball_1.move(arcs[index_arcs])
+        if ball_1.is_out_circle:
+            index_arcs += 1
+            ball_1.is_out_circle = False
 
         screen.fill("black")
 
-        for ball in balls:
-            ball.draw(screen)
-        for arc in arcs:
-            arc.draw(screen)
+        ball_1.draw(screen)
+        for i in range(index_arcs, len(arcs)):
+            arcs[i].draw(screen)
 
         pygame.display.flip()
 
@@ -65,9 +54,9 @@ if __name__ == "__main__":
         frame_count += 1
 
         clock.tick(60)
-        print(frame_count)
+        #print(frame_count)
 
     pygame.quit()
 
-    create_video_from_frames()
+    #create_video_from_frames()
     delete_frames()

@@ -21,9 +21,8 @@ class Ball:
         self.speed = random.uniform(-3, 3)
         self.velocity = self.direction * self.speed
 
-        self.is_out_circle = False
         self.is_out_screen = False
-        self.has_spawned = False
+        self.is_out_circle = False
 
     def move(self, arc):
         self.velocity.y += GRAVITY
@@ -60,49 +59,35 @@ class Ball:
             self.is_out_screen = True
 
         self.position += self.velocity
-    
-    def collision_ball(self, other):
-        delta = other.position - self.position
-        distance = delta.length()
-        min_dist = self.radius + other.radius
-        if distance < min_dist and distance != 0:
-            # Correction de position
-            overlap = min_dist - distance
-            direction = delta.normalize()
-            self.position -= direction * (overlap / 2)
-            other.position += direction * (overlap / 2)
-            # Rebond : échange de vitesse sur l'axe de collision
-            v1 = self.velocity
-            v2 = other.velocity
-            n = direction
-            p = 2 * (v1 - v2).dot(n) / 2
-
-            self.velocity -= p * n
-            other.velocity += p * n
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, self.position, self.radius)
 
 class Arc:
-    def __init__(self):
+    def __init__(self, bonus_size, bonus_decalage, bonus_speed):
         self.color = "white"
 
-        self.rect = pygame.Rect(0, 0, SCREEN_WIDTH / 1.5, SCREEN_WIDTH / 1.5)
+        self.rect = pygame.Rect(0, 0, (SCREEN_WIDTH / 2.5) + bonus_size,
+                                (SCREEN_WIDTH / 2.5) + bonus_size)
         self.rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-        self.radius = self.rect.height / 2
+        self.radius = self.rect.height / 2 
 
         # Quelques définitions pour les angles du trou et du cercle
-        self.start_hole_angle = random.uniform(0, 2 * math.pi)
+        self.start_hole_angle = 2*math.pi - bonus_decalage
         self.end_hole_angle = self.start_hole_angle + 0.2 * math.pi
         if self.end_hole_angle > 2 * math.pi:
             self.end_hole_angle -= 2 * math.pi
 
         self.width = 1
 
+        self.h_b_destroyed = False
+
+        self.bonus_speed = bonus_speed
+
     def rotate(self):
-        self.start_hole_angle = ((self.start_hole_angle + ARC_SPEED_ROTATE) %
+        self.start_hole_angle = ((self.start_hole_angle + (ARC_SPEED_ROTATE * self.bonus_speed)) %
                                  (2 * math.pi))
-        self.end_hole_angle = ((self.end_hole_angle + ARC_SPEED_ROTATE) %
+        self.end_hole_angle = ((self.end_hole_angle + (ARC_SPEED_ROTATE * self.bonus_speed)) %
                                (2 * math.pi))
 
     def draw(self, surface):

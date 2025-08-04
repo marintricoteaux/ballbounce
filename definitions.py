@@ -7,9 +7,11 @@ GRAVITY = 0.15
 MAX_SPEED = 100
 
 BALL_SPEED = 3
-ARC_SPEED_ROTATE = 0.04
+ARC_SPEED_ROTATE = 0.01
 
 ENERGY_LOST_COEFF = 1
+
+N_ARCS = 10
 
 def angle_in_interval(angle, start, end):
     if start <= end:
