@@ -4,6 +4,9 @@ import random
 
 from definitions import *
 
+pygame.mixer.init()
+hit_sound = pygame.mixer.Sound("sounds/pop.mp3")
+
 class Ball:
     def __init__(self):
         self.color = pygame.Color(random.randint(0, 255),
@@ -49,6 +52,7 @@ class Ball:
                 self.velocity -= 2 * ps_v_norm * normale
                 self.velocity *= ENERGY_LOST_COEFF
                 self.position = arc.rect.center + normale * max_dist
+                hit_sound.play()
         
         # La balle sort de l'écran
         if not (0 < self.position.x < SCREEN_WIDTH or
@@ -95,19 +99,6 @@ class Arc:
 
         self.width = 1
 
-        # Effet néon extérieur
-        self.neon_width = 1
-        self.neon_color = []
-        self.neon_rect = []
-        for i in range (10):
-            self.neon_color.append(pygame.Color(100 - (i * 5),
-                                                100 - (i * 5),
-                                                100 - (i * 5)))
-            self.neon_rect.append(pygame.Rect(self.rect))
-            self.neon_rect[i].width = self.rect.width + i
-            self.neon_rect[i].height = self.rect.height + i
-            self.neon_rect[i].center = self.rect.center 
-
     def rotate(self):
         self.start_hole_angle = ((self.start_hole_angle + ARC_SPEED_ROTATE) %
                                  (2 * math.pi))
@@ -118,6 +109,3 @@ class Arc:
         # Arc principal
         pygame.draw.arc(surface, self.color, self.rect, self.end_hole_angle,
                         self.start_hole_angle, self.width)
-        # Effet néon
-        #for i in range(10):
-            #pygame.draw.arc(surface, self.neon_color[i], self.neon_rect[i], self.end_hole_angle, self.start_hole_angle, self.neon_width)

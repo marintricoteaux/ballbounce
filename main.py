@@ -12,6 +12,9 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     running = True
 
+    pygame.mixer.init()
+    out_sound = pygame.mixer.Sound("sounds/pet.wav")
+
     os.makedirs("frames", exist_ok = True)
     os.makedirs("videos", exist_ok = True)
     frame_count = 0
@@ -39,6 +42,7 @@ if __name__ == "__main__":
                 if ball.is_out_circle and not ball.has_spawned:
                     for i in range (2):
                         balls.append(Ball())
+                        out_sound.play()
                     ball.has_spawned = True
                 # Lorque la balle sort de l'écran, elle est supprimée
                 if ball.is_out_screen:
