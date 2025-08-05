@@ -24,7 +24,9 @@ class Ball:
         self.is_out_screen = False
         self.is_out_circle = False
 
-    def move(self, arc):
+        self.hit_times = []
+
+    def move_in_arc(self, arc, frame_count):
         self.velocity.y += GRAVITY
 
         if self.velocity.length() > MAX_SPEED:
@@ -52,6 +54,7 @@ class Ball:
                 self.velocity *= ENERGY_LOST_COEFF
                 self.position = arc.rect.center + normale * max_dist
                 hit_sound.play()
+                self.hit_times.append(int((frame_count / 60) * 1000))
         
         # La balle sort de l'écran
         if not (0 < self.position.x < SCREEN_WIDTH or
@@ -60,11 +63,14 @@ class Ball:
 
         self.position += self.velocity
 
+    def move(self):
+        self.position += self.velocity
+
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, self.position, self.radius)
 
 class Arc:
-    def __init__(self, bonus_size, bonus_decalage, bonus_speed):
+    def __init__(self, bonus_size, malus_speed):
         self.color = "white"
 
         self.rect = pygame.Rect(0, 0, (SCREEN_WIDTH / 2.5) + bonus_size,
@@ -73,7 +79,7 @@ class Arc:
         self.radius = self.rect.height / 2 
 
         # Quelques définitions pour les angles du trou et du cercle
-        self.start_hole_angle = 2*math.pi - bonus_decalage
+        self.start_hole_angle = 2*math.pi
         self.end_hole_angle = self.start_hole_angle + 0.2 * math.pi
         if self.end_hole_angle > 2 * math.pi:
             self.end_hole_angle -= 2 * math.pi
@@ -82,14 +88,19 @@ class Arc:
 
         self.h_b_destroyed = False
 
-        self.bonus_speed = bonus_speed
+        self.speed = ARC_SPEED_ROTATE * malus_speed
 
     def rotate(self):
-        self.start_hole_angle = ((self.start_hole_angle + (ARC_SPEED_ROTATE * self.bonus_speed)) %
+        self.start_hole_angle = ((self.start_hole_angle + 
+                                  (self.speed)) %
                                  (2 * math.pi))
-        self.end_hole_angle = ((self.end_hole_angle + (ARC_SPEED_ROTATE * self.bonus_speed)) %
+        self.end_hole_angle = ((self.end_hole_angle + 
+                                (self.speed)) %
                                (2 * math.pi))
-
+    
+    def change_orientation_rotation(self):
+        self.speed = - self.speed
+        
     def draw(self, surface):
         # Arc principal
         pygame.draw.arc(surface, self.color, self.rect, self.end_hole_angle,

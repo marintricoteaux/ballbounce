@@ -13,7 +13,9 @@ if __name__ == "__main__":
     running = True
 
     pygame.mixer.init()
-    out_sound = pygame.mixer.Sound("sounds/pet.wav")
+    out_circle_sound_pygame = pygame.mixer.Sound("sounds/pet.wav")
+
+    out_circle_times = []
 
     os.makedirs("frames", exist_ok = True)
     os.makedirs("videos", exist_ok = True)
@@ -22,7 +24,8 @@ if __name__ == "__main__":
     ball_1 = Ball()
     arcs = []
     for i in range(0, 10):
-        arcs.append(Arc(i * (30), i * (0.1), 0.95 - ((i+1) * 0.05)))
+        arcs.append(Arc(i * BONUS_ARC_SIZE, 
+                        1 - ((i+1) * MALUS_ARC_SPEED)))
     index_arcs = 0
 
     while running and frame_count < MAX_FRAMES:
@@ -33,19 +36,29 @@ if __name__ == "__main__":
                 if event.key == pygame.K_ESCAPE:
                     running = False
 
+        # Les arcs tournent
         for arc in arcs:
             arc.rotate()
 
-        ball_1.move(arcs[index_arcs])
-        if ball_1.is_out_circle:
-            index_arcs += 1
-            ball_1.is_out_circle = False
+        print(index_arcs)
+        if index_arcs < N_ARCS:
+            ball_1.move_in_arc(arcs[index_arcs], frame_count)
+            if ball_1.is_out_circle:
+                out_circle_sound_pygame.play()
+                out_circle_times.append(int((frame_count / 60) * 1000))
+                for arc in arcs:
+                    arc.change_orientation_rotation()
+                index_arcs += 1
+                ball_1.is_out_circle = False
+        else:
+            ball_1.move()
 
         screen.fill("black")
 
         ball_1.draw(screen)
-        for i in range(index_arcs, len(arcs)):
-            arcs[i].draw(screen)
+        if index_arcs < N_ARCS:
+            for i in range(index_arcs, len(arcs)):
+                arcs[i].draw(screen)
 
         pygame.display.flip()
 
@@ -55,8 +68,11 @@ if __name__ == "__main__":
 
         clock.tick(60)
         #print(frame_count)
+    
+    hit_times = ball_1.hit_times
 
     pygame.quit()
 
-    #create_video_from_frames()
-    delete_frames()
+    create_music_from_sounds(hit_times, out_circle_times)
+    create_video()
+    delete_frames_audio()
