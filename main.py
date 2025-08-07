@@ -117,11 +117,13 @@ if __name__ == "__main__":
 
         pygame.quit()
 
-        if 0 <= duration_ms <= 5000:
+        print(seconds, centiseconds)
+        if 0 <= seconds < 5 and 0 < centiseconds:
             condition_respected = True
         else:
             delete_frames_audio()
 
-    create_music_from_sounds(hit_times, out_circle_times, out_all_circles_times)
+    create_music_from_sounds(hit_times, out_circle_times,
+                             out_all_circles_times)
     create_video()
     delete_frames_audio()
