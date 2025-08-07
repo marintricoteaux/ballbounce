@@ -7,13 +7,15 @@ from definitions import *
 pygame.mixer.init()
 hit_sound = pygame.mixer.Sound("sounds/pop.mp3")
 
+color_for_arcs = pygame.Color(random.randint(160, 250),
+                              random.randint(160, 255),
+                              random.randint(160, 255))
+
 class Ball:
     def __init__(self):
-        self.color = pygame.Color(random.randint(0, 255),
-                                  random.randint(0, 255),
-                                  random.randint(0, 255))
+        self.color = "white"
         self.position = pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-        self.radius = 10
+        self.radius = 5
 
         initial_angle = random.uniform(0, 2 * math.pi)
         self.direction = pygame.Vector2(math.cos(initial_angle),
@@ -36,7 +38,7 @@ class Ball:
         vec_arc_balle = pygame.Vector2(self.position.x - arc.rect.centerx,
                                        self.position.y - arc.rect.centery)
         dist_arc_balle = math.hypot(*vec_arc_balle)
-        max_dist = arc.radius - self.radius
+        max_dist = (arc.radius - (arc.width / 2) - self.radius)
         if dist_arc_balle > max_dist and self.is_out_circle == False:
             # On vérifie que la balle n'est pas face au trou
             angle = math.atan2(-vec_arc_balle.y, vec_arc_balle.x)
@@ -53,8 +55,8 @@ class Ball:
                 self.velocity -= 2 * ps_v_norm * normale
                 self.velocity *= ENERGY_LOST_COEFF
                 self.position = arc.rect.center + normale * max_dist
-                hit_sound.play()
-                self.hit_times.append(int((frame_count / 60) * 1000))
+                #hit_sound.play()
+                self.hit_times.append(int((frame_count / FPS) * 1000))
         
         # La balle sort de l'écran
         if not (0 < self.position.x < SCREEN_WIDTH or
@@ -70,11 +72,13 @@ class Ball:
         pygame.draw.circle(surface, self.color, self.position, self.radius)
 
 class Arc:
-    def __init__(self, bonus_size, malus_speed):
-        self.color = "white"
+    def __init__(self, bonus_size, malus_speed, bonus_color):
+        self.color = (color_for_arcs.r + bonus_color,
+                      color_for_arcs.g + bonus_color,
+                      color_for_arcs.b + bonus_color) 
 
-        self.rect = pygame.Rect(0, 0, (SCREEN_WIDTH / 2.5) + bonus_size,
-                                (SCREEN_WIDTH / 2.5) + bonus_size)
+        self.rect = pygame.Rect(0, 0, (SCREEN_WIDTH / 6) + bonus_size,
+                                (SCREEN_WIDTH / 6) + bonus_size)
         self.rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         self.radius = self.rect.height / 2 
 
@@ -84,7 +88,7 @@ class Arc:
         if self.end_hole_angle > 2 * math.pi:
             self.end_hole_angle -= 2 * math.pi
 
-        self.width = 1
+        self.width = 5
 
         self.h_b_destroyed = False
 

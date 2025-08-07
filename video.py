@@ -1,19 +1,18 @@
 import os
-
 from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 from moviepy.audio.io.AudioFileClip import AudioFileClip
-
 from datetime import datetime
-
 from pydub import AudioSegment
-
 import shutil
 
-def create_music_from_sounds(hit_times, out_circle_times, duration_ms = 61 * 1000):
+from definitions import *
+
+def create_music_from_sounds(hit_times, out_circle_times, out_all_circles_times, duration_ms = 61 * 1000):
     os.makedirs("audios", exist_ok=True)
 
     out_circle_sound_video = AudioSegment.from_file("sounds/pet.wav")
     hit_sound_video = AudioSegment.from_file("sounds/pop.mp3")
+    out_all_circles_sound_video = AudioSegment.from_file("sounds/victory_ring.mp3")
     track = AudioSegment.silent(duration_ms)
     for t in out_circle_times:
         if 0 <= t <= duration_ms:
@@ -21,6 +20,9 @@ def create_music_from_sounds(hit_times, out_circle_times, duration_ms = 61 * 100
     for t in hit_times:
         if 0 <= t <= duration_ms:
             track = track.overlay(hit_sound_video, t)
+    for t in out_all_circles_times:
+        if 0 <= t <= duration_ms:
+            track = track.overlay(out_all_circles_sound_video, t)
     track.export("audios/audio.mp3", "mp3")
     
 def create_video():
@@ -37,7 +39,7 @@ def create_video():
         if f.endswith(".png") or f.endswith(".jpg")
     ])
 
-    clip = ImageSequenceClip(frame_files, fps=60)
+    clip = ImageSequenceClip(frame_files, fps=FPS)
 
     audio = AudioFileClip("audios/audio.mp3")
     audio = audio.subclipped(0, clip.duration)
@@ -47,5 +49,7 @@ def create_video():
     clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
 
 def delete_frames_audio():
-    shutil.rmtree("frames")
-    shutil.rmtree("audios")
+    if os.path.isdir("frames"):
+        shutil.rmtree("frames")
+    if os.path.isdir("audios"):
+        shutil.rmtree("audios")
