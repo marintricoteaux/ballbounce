@@ -1,9 +1,7 @@
-import os
 from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from datetime import datetime
 from pydub import AudioSegment
-import shutil
 
 from definitions import *
 
@@ -47,9 +45,3 @@ def create_video():
     clip = clip.with_audio(audio)
 
     clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
-
-def delete_frames_audio():
-    if os.path.isdir("frames"):
-        shutil.rmtree("frames")
-    if os.path.isdir("audios"):
-        shutil.rmtree("audios")

@@ -4,79 +4,80 @@ import sys
 
 from objects import *
 from definitions import *
-from video import *
 
 # Script main
 if __name__ == "__main__":
-    # Conditions pour que la vidéo soit optimale
-    condition_respected = False
+    pygame.init()
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("BallBounce V3")
+    clock = pygame.time.Clock()
+    running = True
 
-    while not condition_respected:
-        pygame.init()
-        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption("BallBounce V3")
-        clock = pygame.time.Clock()
-        running = True
+    font = pygame.font.SysFont("Arial", 48)
 
-        font = pygame.font.SysFont("Arial", 48)
+    start_ticks = pygame.time.get_ticks()
+    duration_ms = 1000 * (FPS / 2)
+    timer_stopped = False
+    color_timer = "white"
 
-        start_ticks = pygame.time.get_ticks()
-        duration_ms = 1000 * (FPS / 2)
-        timer_stopped = False
-        color_timer = "white"
+    out_circle_times = []
+    out_all_circles_times = []
 
-        pygame.mixer.init()
-        out_circle_sound_pygame = pygame.mixer.Sound("sounds/pet.wav")
-        out_all_circles_sound_pygame = pygame.mixer.Sound("sounds/victory_ring.mp3")
+    os.makedirs("frames", exist_ok = True)
+    os.makedirs("videos", exist_ok = True)
+    frame_count = 0
 
-        out_circle_times = []
-        out_all_circles_times = []
+    # Instanciation des entités
+    balls = []
+    for i in range(0, N_BALLS):
+        balls.append(Ball())
+    arcs = []
+    i_arc_a_creer = 0
+    for i in range(0, N_ARCS):
+        arcs.append(Arc(i * BONUS_ARC_SIZE, 
+                        1 - ((i+1) * MALUS_ARC_SPEED),
+                        i * BONUS_COLOR))
+        i_arc_a_creer = i
 
-        os.makedirs("frames", exist_ok = True)
-        os.makedirs("videos", exist_ok = True)
-        frame_count = 0
-
-        ball_1 = Ball()
-        arcs = []
-        for i in range(0, N_ARCS):
-            arcs.append(Arc(i * BONUS_ARC_SIZE, 
-                            1 - ((i+1) * MALUS_ARC_SPEED),
-                            i * BONUS_COLOR))
-        index_arcs = 0
-
-        # Boucle principale
-        while running and frame_count < MAX_FRAMES:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+    # Boucle principale
+    while running and frame_count < MAX_FRAMES:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
                     running = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        running = False
-                    if event.key == pygame.K_q:
-                        delete_frames_audio()
-                        sys.exit()
+                if event.key == pygame.K_q:
+                    delete_frames_audio()
+                    sys.exit()
 
-            # Evolution des objets
-            ball_1.radius += BONUS_BALL_RADIUS
+        # Mouvement
+        for arc in arcs:
+            arc.rotate()
 
-            # Mouvement
-            for arc in arcs:
-                arc.rotate()
-
-            if index_arcs < N_ARCS:
-                ball_1.move_in_arc(arcs[index_arcs], frame_count)
-                if ball_1.is_out_circle:
-                    #out_circle_sound_pygame.play()
+        if len(arcs) > 0:
+            for ball in balls:
+                ball.move_in_arc(arcs[0], frame_count)
+                if ball.is_out_circle:
                     out_circle_times.append(int((frame_count / FPS) * 1000))
                     for arc in arcs:
                         arc.change_orientation_rotation()
-                    index_arcs += 1
-                    if index_arcs == N_ARCS:
-                        #out_all_circles_sound_pygame.play()
+                    arcs.pop(0)
+                    arcs.append(Arc(i_arc_a_creer * BONUS_ARC_SIZE, 
+                                    1 - ((i_arc_a_creer+1) * MALUS_ARC_SPEED),
+                                    i_arc_a_creer * BONUS_COLOR))
+                    if len(arcs) == 0:
                         out_all_circles_times.append(int((frame_count / FPS) * 1000))
-                    ball_1.is_out_circle = False
-            else:
-                ball_1.move()
+                    ball.is_out_circle = False
+            # --- Collision entre balles ---
+            for i in range(len(balls)):
+                for j in range(i + 1, len(balls)):
+                    b1 = balls[i]
+                    b2 = balls[j]
+                    b1.collision_ball(b2)
+        else:
+            for ball in balls:
+                ball.move()
                 if not timer_stopped:
                     frame_to_exit = frame_count + (1 * FPS)
                 timer_stopped = True
@@ -84,46 +85,49 @@ if __name__ == "__main__":
                 if frame_count >= frame_to_exit:
                     running = False
 
-            # Calcul du timer
-            if not timer_stopped:
-                remaining_frames = max(0, (60 * FPS) - frame_count)
-                seconds = remaining_frames // FPS
-                centiseconds = int((remaining_frames % FPS) * (100 / FPS))
-                timer_str = f"{seconds:02d}:{centiseconds:02d}"
+        # Calcul du timer
+        if not timer_stopped:
+            remaining_frames = max(0, (60 * FPS) - frame_count)
+            seconds = remaining_frames // FPS
+            centiseconds = int((remaining_frames % FPS) * (100 / FPS))
+            timer_str = f"{seconds:02d}:{centiseconds:02d}"
 
-            # Affichage
-            screen.fill("black")
+        # Affichage
+        screen.fill("black")
 
-            ball_1.draw(screen)
-            if index_arcs < N_ARCS:
-                for i in range(index_arcs, len(arcs)):
-                    arcs[i].draw(screen)
+        for ball in balls:
+            ball.draw(screen)
+        if len(arcs) > 0:
+            for i in range(0, len(arcs)):
+                arcs[i].draw(screen)
 
-            timer_text = font.render(f"{timer_str}", True, color_timer)
-            timer_rect = timer_text.get_rect(center=(SCREEN_WIDTH // 2,
-                                                    SCREEN_HEIGHT // 2))
-            timer_rect.centery = (arcs[-1].rect.bottom + SCREEN_HEIGHT) / 2.1
-            screen.blit(timer_text, timer_rect)
+        timer_text = font.render(f"{timer_str}", True, color_timer)
+        timer_rect = timer_text.get_rect(center=(SCREEN_WIDTH // 2,
+                                                SCREEN_HEIGHT // 2))
+        timer_rect.centery = (arcs[-1].rect.bottom + SCREEN_HEIGHT) / 2.1
+        screen.blit(timer_text, timer_rect)
 
-            pygame.display.flip()
+        pygame.display.flip()
 
-            # Sauvegarde de l'image dans le dossier frames
-            pygame.image.save(screen, f"frames/frame_{frame_count:04d}.png")
-            frame_count += 1
+        # Sauvegarde de l'image dans le dossier frames
+        pygame.image.save(screen, f"frames/frame_{frame_count:04d}.png")
+        frame_count += 1
 
-            clock.tick(FPS)
-        
-        hit_times = ball_1.hit_times
+        clock.tick(FPS)
 
-        pygame.quit()
+    # (PEUT-ETRE QUE CA MARCHE) A MODIFIER PLUS TARD, POUR LE SON
+    hit_times = []
+    for ball in balls:
+        hit_times += ball.hit_times
 
-        print(seconds, centiseconds)
-        if 0 <= seconds < 5 and 0 < centiseconds:
-            condition_respected = True
-        else:
-            delete_frames_audio()
+    pygame.quit()
+    
+    make_video = True
 
-    create_music_from_sounds(hit_times, out_circle_times,
-                             out_all_circles_times)
-    create_video()
-    delete_frames_audio()
+    # Création de la vidéo
+    if make_video:
+        from video import *
+        create_music_from_sounds(hit_times, out_circle_times,
+                                out_all_circles_times)
+        create_video()
+        delete_frames_audio()

@@ -13,14 +13,15 @@ color_for_arcs = pygame.Color(random.randint(160, 250),
 
 class Ball:
     def __init__(self):
-        self.color = "white"
+        self.color = "black"
+        self.color_contour = "white"
         self.position = pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-        self.radius = 5
+        self.radius = BALL_RADIUS
 
         initial_angle = random.uniform(0, 2 * math.pi)
         self.direction = pygame.Vector2(math.cos(initial_angle),
                                         math.sin(initial_angle))
-        self.speed = random.uniform(-3, 3)
+        self.speed = random.uniform(-1.5, 1.5)
         self.velocity = self.direction * self.speed
 
         self.is_out_screen = False
@@ -68,8 +69,27 @@ class Ball:
     def move(self):
         self.position += self.velocity
 
+    def collision_ball(self, other_ball):
+        delta = other_ball.position - self.position
+        dist = delta.length()
+        min_dist = self.radius + other_ball.radius
+        if dist < min_dist and dist > 0:
+            # Correction de la position pour éviter l'empilement
+            overlap = 0.5 * (min_dist - dist + 1)
+            direction = delta.normalize()
+            self.position -= direction * overlap
+            other_ball.position += direction * overlap
+            # Calcul du rebond élastique (simplifié, masses égales)
+            v1, v2 = self.velocity, other_ball.velocity
+            self.velocity = v1 - direction * v1.dot(direction) + direction * v2.dot(direction)
+            other_ball.velocity = v2 - direction * v2.dot(direction) + direction * v1.dot(direction)
+            # Applique la perte d'énergie
+            self.velocity *= ENERGY_LOST_COEFF
+            other_ball.velocity *= ENERGY_LOST_COEFF
+
     def draw(self, surface):
-        pygame.draw.circle(surface, self.color, self.position, self.radius)
+        pygame.draw.circle(surface, self.color_contour, self.position, self.radius)
+        pygame.draw.circle(surface, self.color, self.position, self.radius * 0.9)
 
 class Arc:
     def __init__(self, bonus_size, malus_speed, bonus_color):
@@ -77,8 +97,8 @@ class Arc:
                       color_for_arcs.g + bonus_color,
                       color_for_arcs.b + bonus_color) 
 
-        self.rect = pygame.Rect(0, 0, (SCREEN_WIDTH / 6) + bonus_size,
-                                (SCREEN_WIDTH / 6) + bonus_size)
+        self.rect = pygame.Rect(0, 0, (SCREEN_WIDTH / 2) + bonus_size,
+                                (SCREEN_WIDTH / 2) + bonus_size)
         self.rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         self.radius = self.rect.height / 2 
 
