@@ -1,3 +1,4 @@
+# Constantes
 SCREEN_WIDTH = 1080 / 2
 SCREEN_HEIGHT = 1920 / 2
 
@@ -13,16 +14,18 @@ ARC_SPEED_ROTATE = 0.01
 
 BALL_RADIUS = 30
 
-ENERGY_LOST_COEFF = 0.99
+ENERGY_LOST_COEFF = 1
 
-N_ARCS = 15
+N_ARCS = 5 # 28 pour la V. finale
 N_BALLS = 2
 
 BONUS_ARC_SIZE = 30
-MALUS_ARC_SPEED = 0.06
-BONUS_COLOR = -10
+BONUS_COLOR = 10
 BONUS_BALL_RADIUS = 0.00008
 
+V_RAPPROCHEMENT = 1
+
+# Fonctions
 def angle_in_interval(angle, start, end):
     if start <= end:
         return start <= angle <= end

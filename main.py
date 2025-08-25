@@ -31,13 +31,12 @@ if __name__ == "__main__":
     balls = []
     for i in range(0, N_BALLS):
         balls.append(Ball())
-    arcs = []
-    i_arc_a_creer = 0
-    for i in range(0, N_ARCS):
-        arcs.append(Arc(i * BONUS_ARC_SIZE, 
-                        1 - ((i+1) * MALUS_ARC_SPEED),
-                        i * BONUS_COLOR))
-        i_arc_a_creer = i
+    arcs = [Arc((SCREEN_WIDTH / 2, SCREEN_WIDTH / 2), "white")]
+    for i in range(1, N_ARCS):
+        arcs.append(Arc((arcs[i-1].rect.width + BONUS_ARC_SIZE, arcs[i-1].rect.height + BONUS_ARC_SIZE),
+                        "white"))
+
+    current_rotation_sens = 1
 
     # Boucle principale
     while running and frame_count < MAX_FRAMES:
@@ -45,9 +44,7 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-                if event.key == pygame.K_q:
+                if (event.key == pygame.K_q or event.key == pygame.K_ESCAPE) :
                     delete_frames_audio()
                     sys.exit()
 
@@ -59,16 +56,25 @@ if __name__ == "__main__":
             for ball in balls:
                 ball.move_in_arc(arcs[0], frame_count)
                 if ball.is_out_circle:
+                    print("Break")
+                    # On supprime un arc, on ajoute un arc
                     out_circle_times.append(int((frame_count / FPS) * 1000))
                     for arc in arcs:
                         arc.change_orientation_rotation()
+                    current_rotation_sens *= -1
                     arcs.pop(0)
-                    arcs.append(Arc(i_arc_a_creer * BONUS_ARC_SIZE, 
-                                    1 - ((i_arc_a_creer+1) * MALUS_ARC_SPEED),
-                                    i_arc_a_creer * BONUS_COLOR))
-                    if len(arcs) == 0:
-                        out_all_circles_times.append(int((frame_count / FPS) * 1000))
+                    arcs.append(Arc((arcs[-1].rect.width + BONUS_ARC_SIZE, arcs[-1].rect.height + BONUS_ARC_SIZE),
+                                    "white", arcs[-1].start_hole_angle,
+                                    current_rotation_sens))
                     ball.is_out_circle = False
+                # On rapproche les cercles
+                if arcs[0].rect.width > (SCREEN_WIDTH / 2):
+                    for arc in arcs:
+                        arc.rect.width -= V_RAPPROCHEMENT
+                        arc.rect.height -= V_RAPPROCHEMENT
+                        arc.radius = arc.rect.height / 2
+                        arc.rect.center = (SCREEN_WIDTH / 2,
+                                           SCREEN_HEIGHT / 2)
             # --- Collision entre balles ---
             for i in range(len(balls)):
                 for j in range(i + 1, len(balls)):
@@ -104,7 +110,7 @@ if __name__ == "__main__":
         timer_text = font.render(f"{timer_str}", True, color_timer)
         timer_rect = timer_text.get_rect(center=(SCREEN_WIDTH // 2,
                                                 SCREEN_HEIGHT // 2))
-        timer_rect.centery = (arcs[-1].rect.bottom + SCREEN_HEIGHT) / 2.1
+        #timer_rect.centery = (arcs[-1].rect.bottom + SCREEN_HEIGHT) / 2.1
         screen.blit(timer_text, timer_rect)
 
         pygame.display.flip()
