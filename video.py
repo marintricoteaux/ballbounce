@@ -4,6 +4,7 @@ from datetime import datetime
 from pydub import AudioSegment
 
 from definitions import *
+from functions import *
 
 def create_music_from_sounds(hit_times, out_circle_times, out_all_circles_times, duration_ms = 61 * 1000):
     os.makedirs("audios", exist_ok=True)
@@ -40,8 +41,12 @@ def create_video():
     clip = ImageSequenceClip(frame_files, fps=FPS)
 
     audio = AudioFileClip("audios/audio.mp3")
-    audio = audio.subclipped(0, clip.duration)
+
+    duration = min(clip.duration, audio.duration)
+    audio = audio.subclipped(0, duration)
 
     clip = clip.with_audio(audio)
 
-    clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
+    clip.write_videofile(output_path,
+                         codec="libx264",
+                         audio_codec="aac")

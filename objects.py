@@ -3,14 +3,15 @@ import math
 import random
 
 from definitions import *
+from functions import *
 
 pygame.mixer.init()
 hit_sound = pygame.mixer.Sound("sounds/pop.mp3")
 
 class Ball:
-    def __init__(self):
+    def __init__(self, color_contour = "white", text = ""):
         self.color = "black"
-        self.color_contour = "white"
+        self.color_contour = color_contour
         self.position = pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
         self.radius = BALL_RADIUS
 
@@ -19,6 +20,14 @@ class Ball:
                                         math.sin(initial_angle))
         self.speed = random.uniform(-1.5, 1.5)
         self.velocity = self.direction * self.speed
+
+        font = pygame.font.SysFont("Arial", 25)
+
+        self.text = text
+        self.text_in_circle = font.render(text, True, "white")
+        self.text_rect = self.text_in_circle.get_rect(center=(self.position))
+
+        self.count = 0
 
         self.is_out_screen = False
         self.is_out_circle = False
@@ -44,6 +53,7 @@ class Ball:
             if angle_in_interval(angle, arc.start_hole_angle,
                                  arc.end_hole_angle):
                 self.is_out_circle = True
+                self.count += 1
             else:
                 # Rebond                
                 normale = vec_arc_balle / dist_arc_balle
@@ -61,6 +71,7 @@ class Ball:
             self.is_out_screen = True
 
         self.position += self.velocity
+        self.text_rect.center = self.position
 
     def move(self):
         self.position += self.velocity
@@ -87,10 +98,42 @@ class Ball:
             other_ball.velocity *= ENERGY_LOST_COEFF
 
     def draw(self, surface):
+        # Dessin de la balle/contour
         pygame.draw.circle(surface, self.color_contour,
                            self.position, self.radius)
         pygame.draw.circle(surface, self.color,
                            self.position, self.radius * 0.9)
+        # Dessin du texte
+        surface.blit(self.text_in_circle, self.text_rect)
+
+class CountBox:
+    def __init__(self, ball):
+        self.font = pygame.font.SysFont("Arial", 25)
+
+        self.text = self.font.render(f"{ball.text} : {ball.count}",
+                                True, "white", ball.color_contour)
+        if ball.text == "YES":
+            self.position = (SCREEN_WIDTH/4, SCREEN_HEIGHT/4)
+        if ball.text == "NO":
+            self.position = ((SCREEN_WIDTH*3)/4, SCREEN_HEIGHT/4)
+        self.rect = self.text.get_rect(center=self.position)
+        self.background_rect = self.text.get_rect(center=self.position)
+        self.back_color = ball.color_contour
+
+    def maj(self, ball):
+        self.text = self.font.render(f"{ball.text} : {ball.count}",
+                                True, "white")
+        self.background_rect = self.text.get_rect(center=self.position)
+        self.background_rect.width *= COEF_RECT_BACK
+        self.background_rect.height *= COEF_RECT_BACK
+        self.background_rect.center = self.position
+        self.rect = self.text.get_rect(center=self.position)
+        self.rect.center = self.position
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, self.back_color,
+                         self.background_rect, border_radius=8)
+        surface.blit(self.text, self.rect)
 
 class Arc:
     def __init__(self, size, color,
@@ -103,7 +146,7 @@ class Arc:
 
         # Quelques définitions pour les angles du trou et du cercle
         self.start_hole_angle = start_hole_angle
-        self.end_hole_angle = self.start_hole_angle + 0.2 * math.pi
+        self.end_hole_angle = self.start_hole_angle + SIZE_HOLE_COEFF * math.pi
         if self.end_hole_angle > 2 * math.pi:
             self.end_hole_angle -= 2 * math.pi
 

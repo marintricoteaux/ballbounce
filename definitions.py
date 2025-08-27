@@ -16,25 +16,16 @@ BALL_RADIUS = 30
 
 ENERGY_LOST_COEFF = 1
 
-N_ARCS = 5 # 28 pour la V. finale
+N_ARCS = 28 # 28 pour la V. finale
 N_BALLS = 2
 
 BONUS_ARC_SIZE = 30
 BONUS_COLOR = 10
 BONUS_BALL_RADIUS = 0.00008
+BONUS_START_HOLE = 0.1
+
+SIZE_HOLE_COEFF = 0.3
 
 V_RAPPROCHEMENT = 1
 
-# Fonctions
-def angle_in_interval(angle, start, end):
-    if start <= end:
-        return start <= angle <= end
-    else:
-        return angle >= start or angle <= end
-
-import os, shutil
-def delete_frames_audio():
-    if os.path.isdir("frames"):
-        shutil.rmtree("frames")
-    if os.path.isdir("audios"):
-        shutil.rmtree("audios")
+COEF_RECT_BACK = 1.3

@@ -1,0 +1,5 @@
+- Mettre une trainée sur les balles
+- Mettre un effet de particule quand les arcs se brisent
+- Calibrer les countbox
+- régler le bug de son
+- améliorer les soundeffect
