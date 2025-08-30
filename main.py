@@ -14,8 +14,6 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     running = True
 
-    font = pygame.font.SysFont("Arial", 48)
-
     start_ticks = pygame.time.get_ticks()
     duration_ms = 1000 * (FPS / 2)
     timer_stopped = False
@@ -24,103 +22,33 @@ if __name__ == "__main__":
     out_circle_times = []
     out_all_circles_times = []
 
-    red_color = pygame.Color(255,100,100)
-    green_color = pygame.Color(100,255,100)
-
     os.makedirs("frames", exist_ok = True)
     os.makedirs("videos", exist_ok = True)
     frame_count = 0
 
     # Instanciation des entités
-    balls = [Ball(green_color, "YES"), Ball(red_color, "NO")]
-    count_boxes = [CountBox(balls[0]), CountBox(balls[1])]
-    arcs = [Arc((SCREEN_WIDTH / 2, SCREEN_WIDTH / 2), "white")]
-    for i in range(1, N_ARCS):
-        arcs.append(Arc((arcs[i-1].rect.width + BONUS_ARC_SIZE, arcs[i-1].rect.height + BONUS_ARC_SIZE),
-                        "white", arcs[i-1].start_hole_angle + BONUS_START_HOLE))
-    arc_particule = []
-    index_have_to_supp = []
-
-    current_rotation_sens = 1
+    balls = [Ball()]
+    circles = [Circle()]
 
     # Boucle principale
     while running and frame_count < MAX_FRAMES:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                delete_frames_audio()
+                sys.exit()
             if event.type == pygame.KEYDOWN:
                 if (event.key == pygame.K_q or event.key == pygame.K_ESCAPE) :
                     delete_frames_audio()
                     sys.exit()
 
         # Mouvement
-        for arc in arcs:
-            arc.update()
-
-        for ball in balls:
-            ball.update(arcs[0], frame_count)
-            if ball.is_out_circle:
-                # On supprime un arc, on ajoute un arc
-                out_circle_times.append(int((frame_count / FPS) * 1000))
-                for arc in arcs:
-                    arc.change_orientation_rotation()
-                current_rotation_sens *= -1
-                arc_particule.append(ArcParticule(arcs[0].radius))
-                arcs.pop(0)
-                arcs.append(Arc((arcs[-1].rect.width + BONUS_ARC_SIZE,
-                                    arcs[-1].rect.height + BONUS_ARC_SIZE),
-                                    "white",
-                                    arcs[-1].start_hole_angle +
-                                    BONUS_START_HOLE,
-                                    current_rotation_sens))
-                ball.is_out_circle = False
-            # On rapproche les cercles
-            if arcs[0].rect.width > (SCREEN_WIDTH / 2):
-                for arc in arcs:
-                    arc.rect.width -= V_RAPPROCHEMENT
-                    arc.rect.height -= V_RAPPROCHEMENT
-                    arc.radius = arc.rect.height / 2
-                    arc.rect.center = (SCREEN_WIDTH / 2,
-                                        SCREEN_HEIGHT / 2)
-        # Collision entre les balles
-        for i in range(0, len(balls)):
-            for j in range(i + 1, len(balls)):
-                b1 = balls[i]
-                b2 = balls[j]
-                b1.collision_ball(b2)
-        # Mouvement des particules
-        for i in range(len(arc_particule) - 1, -1, -1):  # de la fin vers le début
-            arc_particule[i].update()
-            if arc_particule[i].is_out_screen:
-                arc_particule.pop(i)
-        print(f"Nombre d'arc à particule : {len(arc_particule)}")
-
-        # Calcul du timer
-        if not timer_stopped:
-            remaining_frames = max(0, (60 * FPS) - frame_count)
-            seconds = remaining_frames // FPS
-            centiseconds = int((remaining_frames % FPS) * (100 / FPS))
-            timer_str = f"{seconds:02d}:{centiseconds:02d}"
+        balls[0].update(circles[0], frame_count)
 
         # Affichage
         screen.fill("black")
 
-        for ap in arc_particule:
-            ap.draw(screen)
-        for ball in balls:
-            ball.draw(screen)
-        for arc in arcs:
-            arc.draw(screen)
-
-        timer_text = font.render(f"{timer_str}", True, color_timer)
-        timer_rect = timer_text.get_rect(center=(SCREEN_WIDTH // 2,
-                                                SCREEN_HEIGHT // 2))
-        screen.blit(timer_text, timer_rect)
-
-        # Compteur YES/NO
-        for i in range (0, 2):
-            count_boxes[i].update(balls[i])
-            count_boxes[i].draw(screen)
+        balls[0].draw(screen)
+        circles[0].draw(screen)
 
         pygame.display.flip()
 
@@ -136,11 +64,9 @@ if __name__ == "__main__":
 
     pygame.quit()
     
-    make_video = True
     # Création de la vidéo
-    if make_video:
-        from video import *
-        create_music_from_sounds(hit_times, out_circle_times,
-                                out_all_circles_times)
-        create_video()
-        delete_frames_audio()
+    from video import *
+    create_music_from_sounds(hit_times, out_circle_times,
+                            out_all_circles_times)
+    create_video()
+    delete_frames_audio()
