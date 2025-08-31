@@ -45,6 +45,11 @@ if __name__ == "__main__":
 
     # Boucle principale
     while running and frame_count < MAX_FRAMES:
+        # Delta + framecount
+        dt = clock.tick(FPS) / 1000.0
+        frame_count += 1
+
+        # Gestion des évènements
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -58,7 +63,7 @@ if __name__ == "__main__":
             arc.update()
 
         for ball in balls:
-            ball.update(arcs[0], frame_count)
+            ball.update(arcs[0], frame_count, dt)
             if ball.is_out_circle:
                 # On supprime un arc, on ajoute un arc
                 out_circle_times.append(int((frame_count / FPS) * 1000))
@@ -93,7 +98,6 @@ if __name__ == "__main__":
             arc_particule[i].update()
             if arc_particule[i].is_out_screen:
                 arc_particule.pop(i)
-        print(f"Nombre d'arc à particule : {len(arc_particule)}")
 
         # Calcul du timer
         if not timer_stopped:
@@ -126,13 +130,14 @@ if __name__ == "__main__":
 
         # Sauvegarde de l'image dans le dossier frames
         pygame.image.save(screen, f"frames/frame_{frame_count:04d}.png")
-        frame_count += 1
 
         clock.tick(FPS)
 
     hit_times = []
     for ball in balls:
         hit_times += ball.hit_times
+    out_circle_times_yes = balls[0].out_circle_times
+    out_circle_times_no = balls[1].out_circle_times
 
     pygame.quit()
     
@@ -140,7 +145,7 @@ if __name__ == "__main__":
     # Création de la vidéo
     if make_video:
         from video import *
-        create_music_from_sounds(hit_times, out_circle_times,
-                                out_all_circles_times)
+        create_music_from_sounds(hit_times, out_circle_times_yes,
+                                 out_circle_times_no)
         create_video()
         delete_frames_audio()

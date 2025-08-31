@@ -5,9 +5,6 @@ import random
 from definitions import *
 from functions import *
 
-pygame.mixer.init()
-hit_sound = pygame.mixer.Sound("sounds/pop.mp3")
-
 class Ball:
     def __init__(self, color_contour = "white", text = ""):
         self.color = "black"
@@ -32,12 +29,19 @@ class Ball:
         self.is_out_circle = False
 
         self.hit_times = []
+        self.out_circle_times = []
+        self.sound_cooldown = 0  # en secondes
 
         self.trail_list = []
 
-    def update(self, arc, frame_count):
-        self.velocity.y += GRAVITY
+    def update(self, arc, frame_count, dt):
+        # Cooldown pour le son
+        if self.sound_cooldown > 0:
+            self.sound_cooldown -= dt
+            if self.sound_cooldown < 0:
+                self.sound_cooldown = 0.0
 
+        self.velocity.y += GRAVITY
         if self.velocity.length() > MAX_SPEED:
             self.velocity = self.velocity.normalize() * MAX_SPEED
         
@@ -46,6 +50,7 @@ class Ball:
                                        self.position.y - arc.rect.centery)
         dist_arc_balle = math.hypot(*vec_arc_balle)
         max_dist = (arc.radius - (arc.width / 2) - self.radius)
+
         if dist_arc_balle > max_dist and self.is_out_circle == False:
             # On vérifie que la balle n'est pas face au trou
             angle = math.atan2(-vec_arc_balle.y, vec_arc_balle.x)
@@ -55,16 +60,19 @@ class Ball:
                                  arc.end_hole_angle):
                 self.is_out_circle = True
                 self.count += 1
+                self.out_circle_times.append(int((frame_count / FPS) * 1000))
             else:
-                # Rebond                
+                # Rebond
                 normale = vec_arc_balle / dist_arc_balle
                 ps_v_norm = ((self.velocity.x * normale.x) +
                              (self.velocity.y * normale.y))
                 self.velocity -= 2 * ps_v_norm * normale
                 self.velocity *= ENERGY_LOST_COEFF
                 self.position = arc.rect.center + normale * max_dist
-                #hit_sound.play()
-                self.hit_times.append(int((frame_count / FPS) * 1000))
+
+                if abs(ps_v_norm) > IMPACT_THRESHOLD and self.sound_cooldown <= 0:
+                    self.hit_times.append(int((frame_count / FPS) * 1000))
+                    self.sound_cooldown = SOUND_COOLDOWN_SECONDS
 
         # Mouvement
         self.position += self.velocity
