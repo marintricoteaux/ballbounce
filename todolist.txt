@@ -1,5 +1,5 @@
-- Mettre une trainée sur les balles
-- Mettre un effet de particule quand les arcs se brisent
-- Calibrer les countbox
-- régler le bug de son
-- améliorer les soundeffect
+- Mettre à jour la suppresion de la video
+- Mettre à jour le nom de la video qui est choisie pour que ce soit la derniere
+- Reprendre le fonctionnement qui fait que upload.py lance main.py car fin des tests
+- Utiliser ce fonctionnement automatique sur des videos satisfaisante plutot que sur des videos ou il faut repondre à des commentaires
+- Mettre en place un cron sur un ordi pour que le programme tourne plusieurs fois par jour
